@@ -1,3 +1,10 @@
+## [1.0.4](https://github.com/oguzhalit/DeployEks/compare/v1.0.3...v1.0.4) (2021-10-17)
+
+
+### Fix
+
+* Secret Check Control Changed ([bf37517](https://github.com/oguzhalit/DeployEks/commit/bf37517ac6b4ea9003758dd2a2d02fa49ef2b671))
+
 ## [1.0.3](https://github.com/oguzhalit/DeployEks/compare/v1.0.2...v1.0.3) (2021-10-17)
 
 
