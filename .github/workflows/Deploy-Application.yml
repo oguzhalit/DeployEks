@@ -253,6 +253,7 @@ jobs:
 
     - name: Added Docker Registry
       run: kubectl create secret docker-registry dockerhub --docker-username=${{ secrets.DOCKERHUB_USERNAME }} --docker-password=${{ secrets.DOCKERHUB_TOKEN }}
+      if: (kubectl get secret | grep dockerhub && echo 0 || echo 1 == "1")
 
     - name: K8S Get Node Name
       run: echo "nodeName=$(kubectl get nodes --no-headers | awk {{'print $1'}} | head -n1)" >> $GITHUB_ENV
