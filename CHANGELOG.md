@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/oguzhalit/DeployEks/compare/v1.1.0...v1.1.1) (2021-10-17)
+
+
+### Fix
+
+* Current Tag Added Job ([cd1784a](https://github.com/oguzhalit/DeployEks/commit/cd1784aff15d67fb1434ab3de309e803f6989b17))
+
 # [1.1.0](https://github.com/oguzhalit/DeployEks/compare/v1.0.5...v1.1.0) (2021-10-17)
 
 
