@@ -1,3 +1,11 @@
+# [1.1.0](https://github.com/oguzhalit/DeployEks/compare/v1.0.5...v1.1.0) (2021-10-17)
+
+
+### Update
+
+* Delete Wait Time for EKS ([782c184](https://github.com/oguzhalit/DeployEks/commit/782c18486e91645d090ec608f39add6f241db391))
+* Disable HPA ([74cc9bc](https://github.com/oguzhalit/DeployEks/commit/74cc9bc18c545e916963c445c5f819e2573c3f51))
+
 ## [1.0.5](https://github.com/oguzhalit/DeployEks/compare/v1.0.4...v1.0.5) (2021-10-17)
 
 
