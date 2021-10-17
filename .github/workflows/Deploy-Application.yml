@@ -267,6 +267,30 @@ jobs:
         kubectl apply -f metrics-server-0.3.6/deploy/1.8+/
       if: ${{ env.secretCheck == 'no' }}
 
+    - uses: octokit/graphql-action@v2.x
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      id: get_latest_release
+      with:
+        owner: ${{ github.actor }}
+        repo: ${{ github.event.repository.name }}
+        query: |
+          query tag($owner:String!, $repo:String!) {
+            repository(owner:$owner, name:$repo){
+              refs(refPrefix:"refs/tags/", last: 1) {
+                edges {
+                  node {
+                    name
+                  }
+                }
+              }
+            }
+          }
+
+    - name: Get Current Tag Name
+      id: get_tag
+      run: echo "CurrentTag=$(echo '${{ steps.get_latest_release.outputs.data }}' | jq -r '.repository.refs.edges[].node.name')" >> $GITHUB_ENV
+
     - name: Deploy Applicaton on K8S
       run: helm upgrade --install whoapp --values values.yaml --set image.tag=${{ env.CurrentTag }} .
       working-directory: ./whoapp-helm
