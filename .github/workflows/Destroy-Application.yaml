@@ -1,0 +1,67 @@
+name: Destory Application
+
+on: [workflow_dispatch]
+
+
+jobs:
+  TerraformDestory:
+    runs-on: ubuntu-latest
+    env:
+      working-directory: ./terraform
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_DEFAULT_REGION }}  # replace this with your aws-region 
+
+    - name: Upload files to S3 with AWS CLI
+      run: |
+        aws s3 sync s3://${{ secrets.AWS_BUCKET_NAME }} .
+
+    - name: Terraform File List
+      run: cd terraform && ls -la
+      
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+    - name: Terraform Init
+      run: terraform init
+      working-directory: ${{ env.working-directory}}
+
+    - name: Permissions
+      run: chmod -R +x .terraform/providers
+      working-directory: ${{ env.working-directory}}
+
+    - name: Terraform Destory
+      run: terraform destroy -auto-approve
+      working-directory: ${{ env.working-directory}}
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_DEFAULT_REGION }} 
+
+    - name: Remove Versions
+      run: |
+        aws s3api delete-objects --bucket ${{ secrets.AWS_BUCKET_NAME }} --delete "$(aws s3api list-object-versions \
+          --bucket ${{ secrets.AWS_BUCKET_NAME }} \
+          --output=json \
+          --query='{Objects: Versions[].{Key:Key,VersionId:VersionId}}')"
+
+    - name: Remove S3 Bucket on AWS
+      run: |
+        aws s3 rb s3://${{ secrets.AWS_BUCKET_NAME }} --force

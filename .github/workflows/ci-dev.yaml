@@ -1,0 +1,49 @@
+name: CI-Dev
+on:
+  push:
+    branches: [ Development ]
+
+jobs:
+  Lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup Python Version
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Create & Start Virtual Environment
+      run: |
+        python3 -m venv venv
+        source venv/bin/activate
+
+    - name: Install Dependencies
+      run: pip install -r requirements.txt
+
+    - name: Run Lint
+      run: pylint app.py
+
+  Test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup Python Version
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Create & Start Virtual Environment
+      run: |
+        python3 -m venv venv
+        source venv/bin/activate
+
+    - name: Install Dependencies
+      run: pip install -r requirements.txt
+
+    - name: Run Test
+      run: pytest 

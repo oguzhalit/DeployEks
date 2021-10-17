@@ -1,0 +1,251 @@
+name: CI
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  Lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup Python Version
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Create & Start Virtual Environment
+      run: |
+        python3 -m venv venv
+        source venv/bin/activate
+
+    - name: Install Dependencies
+      run: pip install -r requirements.txt
+
+    - name: Run Lint
+      run: pylint app.py
+
+  Test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup Python Version
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Create & Start Virtual Environment
+      run: |
+        python3 -m venv venv
+        source venv/bin/activate
+
+    - name: Install Dependencies
+      run: pip install -r requirements.txt
+
+    - name: Run Test
+      run: pytest 
+
+  Release:
+    name: Create Release
+    needs: [Lint, Test]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Semantic Release
+      uses: cycjimmy/semantic-release-action@v2
+      id: semantic
+      with:
+        semantic_version: 16
+        extra_plugins: |
+          @semantic-release/changelog
+          @semantic-release/git
+          conventional-changelog-eslint
+        branches: |
+          ['main']
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+  Build:
+    needs: [Release]
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: octokit/graphql-action@v2.x
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      id: get_latest_release
+      with:
+        owner: ${{ github.actor }}
+        repo: ${{ github.event.repository.name }}
+        query: |
+          query tag($owner:String!, $repo:String!) {
+            repository(owner:$owner, name:$repo){
+              refs(refPrefix:"refs/tags/", last: 1) {
+                edges {
+                  node {
+                    name
+                  }
+                }
+              }
+            }
+          }
+
+    - name: Get Current Tag Name
+      id: get_tag
+      run: echo "CurrentTag=$(echo '${{ steps.get_latest_release.outputs.data }}' | jq -r '.repository.refs.edges[].node.name')" >> $GITHUB_ENV
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Build and push
+      id: docker_build
+      uses: docker/build-push-action@v2
+      with:
+        push: true
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/whoapp:${{ env.CurrentTag }} 
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: '${{ secrets.DOCKERHUB_USERNAME }}/whoapp:${{ env.CurrentTag }}'
+        format: 'table'
+        exit-code: '1'
+        ignore-unfixed: true
+        vuln-type: 'os,library'
+        severity: 'CRITICAL'
+
+  Check-S3-Terraform-Backend:
+    name: Check S3 for Terraform Backend
+    needs: [Lint, Test, Release]
+    runs-on: ubuntu-latest
+    outputs:
+      check-status: ${{ steps.s3check.outputs.status }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_DEFAULT_REGION }} 
+
+    - name: Check S3 Bucket on AWS
+      id: s3check
+      run: |
+        echo "::set-output name=status::$(aws s3 ls | grep ${{ secrets.AWS_BUCKET_NAME }}>/dev/null && echo 'exist' || echo 'create-new-bucket')"
+
+    - name: Create S3 Bucket on AWS
+      if: steps.s3check.outputs.status == 'create-new-bucket'
+      run: |
+        aws s3api create-bucket --bucket ${{ secrets.AWS_BUCKET_NAME }} --region ${{ secrets.AWS_DEFAULT_REGION }} --create-bucket-configuration LocationConstraint=${{ secrets.AWS_DEFAULT_REGION }} &&
+        aws s3api put-bucket-versioning --bucket ${{ secrets.AWS_BUCKET_NAME }} --versioning-configuration Status=Enabled
+  Terraform-Apply:
+    name: Application Resource Create
+    needs: [Check-S3-Terraform-Backend,Lint,Test,Release]
+    runs-on: ubuntu-latest
+    if: needs.Check-S3-Terraform-Backend.outputs.check-status == 'create-new-bucket'  
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1.2.1
+      with:
+        cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+    - name: Terraform Init
+      working-directory: ./terraform
+      id: init
+      run: terraform init
+
+    - name: Terraform Validate
+      working-directory: ./terraform
+      id: validate
+      run: terraform validate -no-color
+    
+    - name: Terraform Plan
+      working-directory: ./terraform
+      id: plan
+      run: terraform plan -no-color
+      continue-on-error: true
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    
+    - name: Terraform Plan Status
+      working-directory: ./terraform
+      if: steps.plan.outcome == 'failure'
+      run: exit 1
+    
+    - name: Terraform Apply
+      working-directory: ./terraform
+      run: terraform apply -auto-approve
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+    - name: Upload Terraform Artifact S3
+      uses: shallwefootball/s3-upload-action@master
+      with:
+        aws_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
+        aws_bucket: ${{ secrets.AWS_BUCKET_NAME }}
+        source_dir: 'terraform'
+        destination_dir: 'terraform'
+
+  Deploy-App:
+    needs: [Terraform-Apply]
+    if: always() && (needs.Check-S3-Terraform-Backend.result == 'success') && (needs.Terraform-Apply.result == 'skipped') || (needs.Terraform-Apply.result == 'success')
+    name: Update deploy
+    runs-on: ubuntu-latest 
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_DEFAULT_REGION }}  # replace this with your aws-region 
+
+    - name: Upload files to S3 with AWS CLI
+      run: |
+        aws s3 sync s3://${{ secrets.AWS_BUCKET_NAME }} .
+
+    - name: K8S Cluster Name
+      run: echo "clusterName=$(cat terraform.tfstate | jq .resources[2].instances[].attributes.id)" >> $GITHUB_ENV
+      working-directory: ./terraform
+
+    - name: K8S Region Name
+      run: echo "regionName=$(cat terraform.tfstate | jq .resources[0].instances[].attributes.id)" >> $GITHUB_ENV
+      working-directory: ./terraform
+
+    - name: Instal Kubectl
+      run: |
+        curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.20.4/2021-04-12/bin/linux/amd64/kubectl
+        curl -o kubectl.sha256 https://amazon-eks.s3.us-west-2.amazonaws.com/1.20.4/2021-04-12/bin/linux/amd64/kubectl.sha256
+        openssl sha1 -sha256 kubectl
+        chmod +x ./kubectl
+        mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl && export PATH=$PATH:$HOME/bin
+
+    - name: Connect Cluster
+      run: aws eks --region ${{ env.regionName }} update-kubeconfig --name ${{ env.clusterName }}
+
+    - name: Test2
+      run: kubectl get ns
