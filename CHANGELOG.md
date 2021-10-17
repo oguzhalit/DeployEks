@@ -1,3 +1,20 @@
+# [1.2.0](https://github.com/oguzhalit/DeployEks/compare/v1.1.1...v1.2.0) (2021-10-17)
+
+
+### Chore
+
+* Deleted unused file ([c17aa75](https://github.com/oguzhalit/DeployEks/commit/c17aa751ff6791ff51bf9f85142a156b1bc44ec8))
+
+### Fix
+
+* Disable Lint W0108 ([15b00fb](https://github.com/oguzhalit/DeployEks/commit/15b00fbc88f275f3b47b894987d958ec629995ce))
+
+### New
+
+* Added Healtcheck Endpoint ([80d58e8](https://github.com/oguzhalit/DeployEks/commit/80d58e81fd297c419abccb69ae6df771dd43cfc9))
+* Helm Healthcheck Settings Added ([a1df4ed](https://github.com/oguzhalit/DeployEks/commit/a1df4ed503cde7c84185f3d4d094bc7963dfc75b))
+* k8s Service List ([56882f7](https://github.com/oguzhalit/DeployEks/commit/56882f7ddf43467d58a736f807a7221936a62852))
+
 ## [1.1.1](https://github.com/oguzhalit/DeployEks/compare/v1.1.0...v1.1.1) (2021-10-17)
 
 
