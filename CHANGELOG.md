@@ -1,3 +1,10 @@
+## [1.0.5](https://github.com/oguzhalit/DeployEks/compare/v1.0.4...v1.0.5) (2021-10-17)
+
+
+### Fix
+
+* Wait EKS Up Time ([735956e](https://github.com/oguzhalit/DeployEks/commit/735956eca2469c0fb348201190aa482a5ab8f3ce))
+
 ## [1.0.4](https://github.com/oguzhalit/DeployEks/compare/v1.0.3...v1.0.4) (2021-10-17)
 
 
