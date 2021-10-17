@@ -254,8 +254,14 @@ jobs:
     - name: Added Docker Registry
       run: kubectl create secret docker-registry dockerhub --docker-username=${{ secrets.DOCKERHUB_USERNAME }} --docker-password=${{ secrets.DOCKERHUB_TOKEN }}
 
+    - name: K8S Get Node Name
+      run: echo "nodeName=$(kubectl get nodes --no-headers | awk {{'print $1'}} | head -n1)" >> $GITHUB_ENV
+
+    - name: Schedule Node
+      run: kubectl taint nodes ${{ env.nodeName }} node-role.kubernetes.io/master-
+
     - name: Deploy Applicaton on K8S
-      run: helm install whoapp --values values.yaml --set image.tag=${{ env.CurrentTag }} .
+      run: helm upgrade --install whoapp --values values.yaml --set image.tag=${{ env.CurrentTag }} .
       working-directory: ./whoapp-helm
 
     - name: Check Status Application
