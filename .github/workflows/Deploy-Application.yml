@@ -252,7 +252,7 @@ jobs:
       run: aws eks --region ${{ env.regionName }} update-kubeconfig --name ${{ env.clusterName }}
 
     - name: Added Docker Registry
-      run: kubectl create secret docker-registry dockerhub --docker-username=${{ DOCKERHUB_USERNAME }} --docker-password=${{ DOCKERHUB_TOKEN }}
+      run: kubectl create secret docker-registry dockerhub --docker-username=${{ secrets.DOCKERHUB_USERNAME }} --docker-password=${{ secrets.DOCKERHUB_TOKEN }}
 
     - name: Deploy Applicaton on K8S
       run: helm install whoapp --values values.yaml --set image.tag=${{ env.CurrentTag }} .
