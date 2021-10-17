@@ -257,3 +257,6 @@ jobs:
     - name: Deploy Applicaton on K8S
       run: helm install whoapp --values values.yaml --set image.tag=${{ env.CurrentTag }} .
       working-directory: ./whoapp-helm
+
+    - name: Check Status Application
+      run: kubectl rollout status deploy whoapp-chart
