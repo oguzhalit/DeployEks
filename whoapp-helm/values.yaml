@@ -37,6 +37,22 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 60
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+  successThreshold: 1
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 60
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+  successThreshold: 1
+
 service:
   type: LoadBalancer
   port: 80
