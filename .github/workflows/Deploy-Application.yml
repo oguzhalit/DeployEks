@@ -1,4 +1,4 @@
-name: CI
+name: Deploy-Application
 on:
   push:
     branches: [ main ]
@@ -251,9 +251,12 @@ jobs:
     - name: Connect Cluster
       run: aws eks --region ${{ env.regionName }} update-kubeconfig --name ${{ env.clusterName }}
 
+    - name: K8S Get Node Name
+      run: echo "secretCheck=$(kubectl get secret | grep dockerhub && echo 0 || echo 1)" >> $GITHUB_ENV
+
     - name: Added Docker Registry
       run: kubectl create secret docker-registry dockerhub --docker-username=${{ secrets.DOCKERHUB_USERNAME }} --docker-password=${{ secrets.DOCKERHUB_TOKEN }}
-      if: (kubectl get secret | grep dockerhub && echo 0 || echo 1 == "1")
+      if: ${{ env.secretCheck == '1' }}
 
     - name: K8S Get Node Name
       run: echo "nodeName=$(kubectl get nodes --no-headers | awk {{'print $1'}} | head -n1)" >> $GITHUB_ENV
