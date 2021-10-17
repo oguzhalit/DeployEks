@@ -217,6 +217,10 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
+    - name: install helm
+      uses: Azure/setup-helm@v1
+
+
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -247,5 +251,9 @@ jobs:
     - name: Connect Cluster
       run: aws eks --region ${{ env.regionName }} update-kubeconfig --name ${{ env.clusterName }}
 
-    - name: Test2
-      run: kubectl get ns
+    - name: Added Docker Registry
+      run: kubectl create secret docker-registry dockerhub --docker-username=${{ DOCKERHUB_USERNAME }} --docker-password=${{ DOCKERHUB_TOKEN }}
+
+    - name: Deploy Applicaton on K8S
+      run: helm install whoapp --values values.yaml .
+      working-directory: ./whoapp-helm
