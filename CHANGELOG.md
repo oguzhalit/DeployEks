@@ -1,3 +1,11 @@
+## [1.0.2](https://github.com/oguzhalit/DeployEks/compare/v1.0.1...v1.0.2) (2021-10-17)
+
+
+### Fix
+
+* Schedule Node Of Pod ([1252d5c](https://github.com/oguzhalit/DeployEks/commit/1252d5c0cd152d99a4e72b54b25f31d66f5bc17e))
+* Secret Status Check ([9895b9e](https://github.com/oguzhalit/DeployEks/commit/9895b9effcf1f5bc76072a8a58406009c3cbe818))
+
 ## [1.0.1](https://github.com/oguzhalit/DeployEks/compare/v1.0.0...v1.0.1) (2021-10-17)
 
 
