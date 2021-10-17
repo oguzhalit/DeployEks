@@ -258,14 +258,18 @@ jobs:
       run: echo "secretCheck=$(cat check.txt)" >> $GITHUB_ENV
 
     - name: Added Docker Registry
-      run: kubectl create secret docker-registry dockerhub --docker-username=${{ secrets.DOCKERHUB_USERNAME }} --docker-password=${{ secrets.DOCKERHUB_TOKEN }}
+      run: kubectl create secret docker-registry dockerhub --docker-username=${{ secrets.DOCKERHUB_USERNAME }} --docker-password=${{ secrets.DOCKER_PASS }}
       if: ${{ env.secretCheck == 'no' }}
 
-    - name: K8S Get Node Name
-      run: echo "nodeName=$(kubectl get nodes --no-headers | awk {{'print $1'}} | head -n1)" >> $GITHUB_ENV
+    - name: Wait EKS Up
+      run: sleep 10m
+      if: ${{ env.secretCheck == 'no' }}
 
-    - name: Schedule Node
-      run: kubectl taint nodes ${{ env.nodeName }} node-role.kubernetes.io/master-
+    - name: Deploy Metric Server
+      run: |
+        wget -O v0.3.6.tar.gz https://codeload.github.com/kubernetes-sigs/metrics-server/tar.gz/v0.3.6 && tar -xzf v0.3.6.tar.gz
+        kubectl apply -f metrics-server-0.3.6/deploy/1.8+/
+      if: ${{ env.secretCheck == 'no' }}
 
     - name: Deploy Applicaton on K8S
       run: helm upgrade --install whoapp --values values.yaml --set image.tag=${{ env.CurrentTag }} .
