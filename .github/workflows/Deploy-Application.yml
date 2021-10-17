@@ -297,3 +297,6 @@ jobs:
 
     - name: Check Status Application
       run: kubectl rollout status deploy whoapp-chart
+
+    - name: Get App Service
+      run: kubectl get svc whoapp-chart
