@@ -255,5 +255,5 @@ jobs:
       run: kubectl create secret docker-registry dockerhub --docker-username=${{ DOCKERHUB_USERNAME }} --docker-password=${{ DOCKERHUB_TOKEN }}
 
     - name: Deploy Applicaton on K8S
-      run: helm install whoapp --values values.yaml .
+      run: helm install whoapp --values values.yaml --set image.tag=${{ env.CurrentTag }} .
       working-directory: ./whoapp-helm
