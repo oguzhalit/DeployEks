@@ -6,7 +6,7 @@ on:
         description: 'Select a value'
         required: true
         default: 'value1'
-        options: ['value1', 'value2', 'value3']
+        options: ${{ steps.get_options.outputs.options }}
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,7 +14,17 @@ jobs:
       - name: Set up the repository
         uses: actions/checkout@v2
 
+      - name: Get options
+        id: get_options
+        run: |
+          echo "::set-output name=options::$(echo 'value1, value2, value3')"
+
+      - name: Check input
+        if: ${{ !contains(steps.get_options.outputs.options, github.event.inputs.selected_value) }}
+        run: echo "Invalid option selected. Please select a valid option." && exit 1
+
       - name: Print input value
+        if: success()
         run: |
           selected=$1
           echo "Selected Value: $selected"
