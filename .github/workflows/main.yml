@@ -5,7 +5,10 @@ on:
       selected_value:
         description: 'Select a value'
         required: true
-        options: ${{ steps.generate_options.outputs.options }}
+        type: choice
+        options: 
+        - oguz
+        - ali
 jobs:
   build:
     runs-on: ubuntu-latest
