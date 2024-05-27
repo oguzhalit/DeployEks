@@ -6,17 +6,13 @@ on:
         description: 'Select a value'
         required: true
         default: 'value1'
-        options: ${{ steps.get_options.outputs.options }}
+        options: ['value1', 'value2', 'value3']
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Set up the repository
         uses: actions/checkout@v2
-
-      - name: Get options
-        id: get_options
-        run: echo "::set-output name=options::$(echo 'value1,value2,value3')"
 
       - name: Print input value
         run: |
