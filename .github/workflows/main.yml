@@ -5,6 +5,8 @@ on:
       selected_value:
         description: 'Select a value'
         required: true
+        default: 'value1'
+        options: ${{ steps.get_options.outputs.options }}
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -12,9 +14,9 @@ jobs:
       - name: Set up the repository
         uses: actions/checkout@v2
 
-      - name: Get command output
-        id: command_output
-        run: echo "::set-output name=value::value1,value2,value3"
+      - name: Get options
+        id: get_options
+        run: echo "::set-output name=options::$(echo 'value1,value2,value3')"
 
       - name: Print input value
         run: |
@@ -22,4 +24,4 @@ jobs:
           echo "Selected Value: $selected"
         shell: bash
         env:
-          1: ${{ steps.command_output.outputs.value }}
+          1: ${{ github.event.inputs.selected_value }}
