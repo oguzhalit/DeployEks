@@ -14,3 +14,16 @@ jobs:
         id: generate_options
         run: |
           echo "::set-output name=options::value1,value2,value3"
+
+      - name: Check input
+        if: ${{ !contains(steps.generate_options.outputs.options, github.event.inputs.selected_value) }}
+        run: echo "Invalid option selected. Please select a valid option." && exit 1
+
+      - name: Print input value
+        if: success()
+        run: |
+          selected=$1
+          echo "Selected Value: $selected"
+        shell: bash
+        env:
+          1: ${{ github.event.inputs.selected_value }}
