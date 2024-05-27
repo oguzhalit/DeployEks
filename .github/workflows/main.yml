@@ -6,7 +6,7 @@ on:
         description: 'Select a value'
         required: true
         default: 'value1'
-        options: ${{ steps.get_options.outputs.oguz }}
+        options: ${{ steps.get_options.outputs.options }}
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -16,15 +16,9 @@ jobs:
 
       - name: Get options
         id: get_options
-        run: |
-          echo "::set-output name=oguz::$(echo 'value1, value2, value3')"
-
-      - name: Check input
-        if: ${{ !contains(steps.get_options.outputs.oguz, github.event.inputs.selected_value) }}
-        run: echo "Invalid option selected. Please select a valid option." && exit 1
+        run: echo "::set-output name=options::$(echo 'value1,value2,value3')"
 
       - name: Print input value
-        if: success()
         run: |
           selected=$1
           echo "Selected Value: $selected"
