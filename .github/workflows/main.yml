@@ -16,12 +16,5 @@ jobs:
 
       - name: Get options
         id: get_options
-        run: echo "::set-output name=options::$(echo 'value1,value2,value3')"
-
-      - name: Print input value
         run: |
-          selected=$1
-          echo "Selected Value: $selected"
-        shell: bash
-        env:
-          1: ${{ github.event.inputs.selected_value }}
+          echo "::set-output name=options::$(echo 'value1, value2, value3')"
