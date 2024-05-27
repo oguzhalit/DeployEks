@@ -1,0 +1,17 @@
+name: Manuel Trigger Example
+on:
+  workflow_dispatch:
+    inputs:
+      text_input:
+        description: 'Enter some text'
+        required: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up the repository
+        uses: actions/checkout@v2
+
+      - name: Print input values
+        run: |
+          echo "Text Input: ${{ github.event.inputs.text_input }}"
