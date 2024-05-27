@@ -2,8 +2,8 @@ name: Manuel Trigger Example
 on:
   workflow_dispatch:
     inputs:
-      text_input:
-        description: 'Enter some text'
+      selected_value:
+        description: 'Select a value'
         required: true
 jobs:
   build:
@@ -12,6 +12,14 @@ jobs:
       - name: Set up the repository
         uses: actions/checkout@v2
 
-      - name: Print input values
+      - name: Get command output
+        id: command_output
+        run: echo "::set-output name=value::value1,value2,value3"
+
+      - name: Print input value
         run: |
-          echo "Text Input: ${{ github.event.inputs.text_input }}"
+          selected=$1
+          echo "Selected Value: $selected"
+        shell: bash
+        env:
+          1: ${{ steps.command_output.outputs.value }}
