@@ -5,19 +5,12 @@ on:
       selected_value:
         description: 'Select a value'
         required: true
-        default: 'value1'
-        options: ['value1', 'value2', 'value3']
+        options: ${{ steps.generate_options.outputs.options }}
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Set up the repository
-        uses: actions/checkout@v2
-
-      - name: Print input value
+      - name: Generate options
+        id: generate_options
         run: |
-          selected=$1
-          echo "Selected Value: $selected"
-        shell: bash
-        env:
-          1: ${{ github.event.inputs.selected_value }}
+          echo "::set-output name=options::value1,value2,value3"
